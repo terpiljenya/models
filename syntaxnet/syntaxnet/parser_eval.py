@@ -74,7 +74,7 @@ def RewriteContext(task_context):
     return fout.name
 
 
-def Eval(sess):
+def EvalForever(sess):
   """Builds and evaluates a network."""
   task_context = FLAGS.task_context
   if FLAGS.resource_dir:
@@ -106,6 +106,11 @@ def Eval(sess):
         arg_prefix=FLAGS.arg_prefix,
         beam_size=FLAGS.beam_size,
         max_steps=FLAGS.max_steps)
+  while True:
+    if not Eval(sess, parser, task_context):
+      break
+
+def Eval(sess, parser, task_context):
   parser.AddEvaluation(task_context,
                        FLAGS.batch_size,
                        corpus_name=FLAGS.input,
@@ -151,11 +156,13 @@ def Eval(sess):
     logging.info('Seconds elapsed in evaluation: %.2f, '
                  'eval metric: %.2f%%', time.time() - t, eval_metric)
 
+  return num_documents
+
 
 def main(unused_argv):
   logging.set_verbosity(logging.INFO)
   with tf.Session() as sess:
-    Eval(sess)
+    EvalForever(sess)
 
 
 if __name__ == '__main__':
